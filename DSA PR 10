@@ -1,0 +1,101 @@
+#include <stdio.h>
+#include <string.h>
+
+#define SIZE 10
+
+// Circular buffer structure
+typedef struct {
+    char buffer[SIZE];
+    int head;
+    int tail;
+    int count;
+} CircularQueue;
+
+// Initialize queue
+void initialize(CircularQueue *q) {
+    q->head = 0;
+    q->tail = 0;
+    q->count = 0;
+}
+
+// Check if buffer is full
+int is_buffer_full(CircularQueue *q) {
+    return q->count == SIZE;
+}
+
+// Check if buffer is empty
+int is_buffer_empty(CircularQueue *q) {
+    return q->count == 0;
+}
+
+// Insert character into buffer
+void enqueue(CircularQueue *q, char data) {
+    if (is_buffer_full(q)) {
+        printf("Buffer Full! Data Lost: %c\n", data);
+        return;
+    }
+
+    q->buffer[q->tail] = data;
+    q->tail = (q->tail + 1) % SIZE;
+    q->count++;
+}
+
+// Remove character from buffer
+char dequeue(CircularQueue *q) {
+    if (is_buffer_empty(q)) {
+        return '\0';
+    }
+
+    char data = q->buffer[q->head];
+    q->head = (q->head + 1) % SIZE;
+    q->count--;
+
+    return data;
+}
+
+// UART transmit function
+void uart_send(CircularQueue *tx, char data) {
+    enqueue(tx, data);
+}
+
+// UART receive function
+void uart_receive(CircularQueue *rx, char data) {
+    enqueue(rx, data);
+}
+
+int main() {
+    CircularQueue tx, rx;
+    char data[] = "HELLO";
+
+    initialize(&tx);
+    initialize(&rx);
+
+    printf("UART Communication Simulation\n");
+
+    // Transmit data
+    printf("\nTransmitting Data: ");
+
+    for (int i = 0; i < strlen(data); i++) {
+        uart_send(&tx, data[i]);
+    }
+
+    while (!is_buffer_empty(&tx)) {
+        char ch = dequeue(&tx);
+        printf("%c", ch);
+    }
+
+    // Receive data
+    printf("\n\nReceiving Data: ");
+
+    for (int i = 0; i < strlen(data); i++) {
+        uart_receive(&rx, data[i]);
+    }
+
+    while (!is_buffer_empty(&rx)) {
+        printf("%c", dequeue(&rx));
+    }
+
+    printf("\n\nCommunication Completed Successfully!\n");
+
+    return 0;
+}
